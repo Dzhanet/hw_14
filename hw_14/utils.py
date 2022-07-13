@@ -93,19 +93,37 @@ def search_double_name(name1,name2):
           FROM netflix
           WHERE "cast" LIKE '%{name1}%' AND "cast" LIKE '%{name2}%'
           ORDER BY release_year DESC
-          LIMIT 10
     '''
 
     result = get_value_from_db(sql=sql)
-    name_dict = {}
-    for item in result:
-        names = set(dict(item).get("cast").split(",")) - set([name1, name2])
+    actors_all = []
 
-        for name in names:
-            name_dict[str(name).strip()] = name_dict.get(str(name).strip(), 0) + 1
+    # Собираем полный список всех актеров
+    for movie in result:
+        actors = movie[0].split(", ")
+        actors_all.extend(actors)
 
-    for key,value in name_dict.items():
-        if value >= 2:
-            print(key)
+    # Оставляем тех, кто встречается дважды
+    actors_seen_twice = {actor for actor in actors_all if actors_all.count(actor) > 2} - {name1, name2}
+    print(actors_seen_twice)
 
+def step_6(type,year,genre):
+    """Функция, которая принимает три параметра и возвращает по ним фильмы"""
+
+    sql = f'''
+          SELECT title,description,listed_in
+          FROM netflix
+          WHERE type = '{type}'
+          AND release_year = '{year}'
+          AND listed_in LIKE '%{genre}%'
+    '''
+    dict_movies = []
+    for item in get_value_from_db(sql=sql):
+        dict_movies.append(item)
+
+    new_result = json.dumps(dict_movies[:-1])
+    return new_result
+
+"""Проверяем наши функции для шагов 5 и 6"""
 search_double_name('Rose McIver','Ben Lamb')
+print(step_6('Movie','2021','Documentaries'))
